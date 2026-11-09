@@ -6,11 +6,7 @@ Le coffre est stocké sur GitHub. Quand l'un de vous double-clique sur `SYNC.bat
 
 ## La routine
 
-1. **En arrivant** : double-clic sur `SYNC.bat`.
-2. **En partant** : attends 2 ou 3 secondes après ta dernière frappe, puis double-clic sur `SYNC.bat`.
-3. Préviens ton binôme : « j'ai synchronisé ».
-
-Obsidian peut rester ouvert. Par contre, **ferme Excel** (ou Word) avant de synchroniser si tu as ouvert un de ces fichiers.
+La routine et les droits d'écriture sont dans [[Répartition]]. Obsidian peut rester ouvert pendant la synchronisation. Par contre, **ferme Excel** (ou Word) si tu as ouvert un fichier du coffre.
 
 > [!warning] Ce n'est pas instantané
 > Les modifications n'arrivent chez l'autre que lorsqu'il lance `SYNC.bat` à son tour. Ce n'est pas comme un Google Docs.
@@ -31,8 +27,8 @@ Obsidian peut rester ouvert. Par contre, **ferme Excel** (ou Word) avant de sync
    ```
 
 6. **Ouvrir le coffre** : dans Obsidian, *Gérer les coffres*, puis *Ouvrir un dossier en tant que coffre*. Va dans *Ce PC > C: > Utilisateurs > ton nom > Documents*, sélectionne `{{NOM_DOSSIER}}` **sans entrer dedans**, puis clique sur *Sélectionner un dossier*. Attention : le « Documents » de OneDrive n'est pas le bon. Si Obsidian le demande, confirme que tu fais confiance à l'auteur du coffre.
-7. **Vérifier** : à gauche, tu dois voir les notes `00 - Accueil` à `09 - Travailler à deux`. Si le coffre est vide, c'est que le mauvais dossier est ouvert : recommence l'étape 6.
-8. **Premier `SYNC.bat`** : dans `Documents\{{NOM_DOSSIER}}`. Il demande ton prénom pour l'historique, et une fenêtre GitHub peut s'ouvrir la première fois : *Sign in with your browser*.
+7. **Vérifier** : à gauche, tu dois voir `00 - Accueil` et les dossiers `Guide`, `Équipe` et `Espaces`. Si le coffre est vide, c'est que le mauvais dossier est ouvert : recommence l'étape 6.
+8. **Premier `SYNC.bat`** : dans `Documents\{{NOM_DOSSIER}}`. Il demande ton prénom pour l'historique (sauf si Git le connaît déjà), puis ton espace. Une fenêtre GitHub peut s'ouvrir la première fois : *Sign in with your browser*.
 
 Astuce : clic droit sur `SYNC.bat`, *Envoyer vers*, *Bureau (créer un raccourci)*.
 
@@ -42,13 +38,19 @@ Astuce : clic droit sur `SYNC.bat`, *Envoyer vers*, *Bureau (créer un raccourci
 |---|---|---|
 | `Tout est à jour sur GitHub` | Tout s'est bien passé | Rien |
 | `CONFLIT` | Vous avez modifié le même fichier non fusionnable, comme un tableur. Ton dossier a pris sa version, la tienne est sauvegardée sur GitHub | Choisissez ensemble quoi garder |
+| `Tu as modifié l'espace de…` | Tu as changé un fichier dans l'espace de l'autre. Sauf si tu confirmes, rien n'est envoyé | Déplace ta modification dans ton espace |
 | `fichiers ont disparu du dossier` | Beaucoup de fichiers manquent d'un coup. Rien n'a été envoyé | Vérifiez le dossier ensemble |
 | `Impossible de joindre GitHub` | Pas d'internet, ou pas d'accès au dépôt | Vérifie ta connexion et l'invitation |
 | `Envoi impossible` | L'invitation n'est pas acceptée | Refais l'étape 2 |
 
 ## Les règles
 
-- **Chacun son tableur.** Excel ne se fusionne pas : faites chacun votre copie, avec votre prénom dans le nom du fichier.
-- **Le même endroit d'une note ?** Les deux versions sont gardées à la suite. Rien n'est perdu, il reste à faire le tri.
+- **Chacun son tableur**, dans son espace : Excel ne se fusionne pas.
+- **Le même endroit d'une note commune ?** Les deux versions sont gardées à la suite. Rien n'est perdu, il reste à faire le tri.
 - **Dépôt privé.** Les documents des profs (sujet, poly) ne doivent pas devenir publics.
 - **Pas de données personnelles ni de mots de passe** dans les notes.
+- **Pas de Google Drive ni de OneDrive sur ce dossier** : leur synchronisation peut abîmer le dépôt.
+
+## Avec Claude Code
+
+Ouvre Claude Code dans ce dossier : le skill `{{SLUG}}` du dépôt s'applique à vous deux. Il fait le point en début de séance, guide sans donner les résultats et tient ton journal. Pour l'appeler : `/{{SLUG}}`.

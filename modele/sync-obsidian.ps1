@@ -48,20 +48,23 @@ if (-not $nom) {
 }
 
 # Espace personnel : demandé une seule fois par poste, pour repérer les
-# modifications faites par erreur dans l'espace de l'autre.
-$espaces = @('glm02', 'AMATEPaul')
-$espace = git config saevv3.espace
-if ($espace -notin $espaces) {
+# modifications faites par erreur dans l'espace d'un autre membre.
+# Les espaces sont les sous-dossiers de Espaces/ (un par pseudo GitHub).
+$espaces = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'Espaces') -Directory -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })
+$espace = git config coffre.espace
+if ($espaces.Count -gt 0 -and $espace -notin $espaces) {
     if ($nom -in $espaces) { $espace = $nom }
     elseif ($NoPause) { Erreur "Espace inconnu : lance d'abord SYNC.bat par un double-clic."; Fin 1 }
     else {
-        $rep = Read-Host "  Quel est ton espace ? 1 = glm02, 2 = AMATEPaul"
-        if ($rep -eq '1') { $espace = 'glm02' } elseif ($rep -eq '2') { $espace = 'AMATEPaul' }
-        else { Erreur "Réponds 1 ou 2. Relance SYNC.bat."; Fin 1 }
+        for ($i = 0; $i -lt $espaces.Count; $i++) { Write-Host "    $($i + 1) = $($espaces[$i])" }
+        $rep = Read-Host "  Quel est ton espace ? Tape son numéro"
+        $n = 0
+        if ([int]::TryParse($rep, [ref]$n) -and $n -ge 1 -and $n -le $espaces.Count) { $espace = $espaces[$n - 1] }
+        else { Erreur "Réponds par un numéro de la liste. Relance SYNC.bat."; Fin 1 }
     }
-    git config saevv3.espace $espace
+    git config coffre.espace $espace
 }
-$autre = $espaces | Where-Object { $_ -ne $espace }
+$autres = @($espaces | Where-Object { $_ -ne $espace })
 
 $branche = git symbolic-ref --short HEAD
 $date = Get-Date -Format 'yyyy-MM-dd HH:mm'
@@ -69,10 +72,14 @@ $date = Get-Date -Format 'yyyy-MM-dd HH:mm'
 # --- 1) Enregistrer ses propres modifs --------------------------------------
 git add -A 2> $null
 
-# Garde-fou : on ne modifie pas l'espace de l'autre sans s'en rendre compte.
-$chezAutre = @(git diff --cached --name-only | Where-Object { $_ -like "Espaces/$autre/*" })
+# Garde-fou : on ne modifie pas l'espace d'un autre sans s'en rendre compte.
+$chezAutre = @(git diff --cached --name-only | Where-Object {
+    $f = $_
+    @($autres | Where-Object { $f -like "Espaces/$_/*" }).Count -gt 0
+})
 if ($chezAutre.Count -gt 0) {
-    Erreur "Tu as modifié l'espace de $autre : $(Split-Path $chezAutre[0] -Leaf)."
+    $proprio = ($chezAutre[0] -split '/')[1]
+    Erreur "Tu as modifié l'espace de $proprio : $(Split-Path $chezAutre[0] -Leaf)."
     $rep = if ($NoPause) { 'n' } else { Read-Host "  Envoyer quand même ? (o/N)" }
     if ($rep -notmatch '^[oOyY]') {
         git reset -q
