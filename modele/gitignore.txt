@@ -1,7 +1,12 @@
 # Réglages Obsidian : chacun garde les siens (thème, fenêtres ouvertes).
 # Les partager créerait des conflits à chaque ouverture, sans rien apporter.
-.obsidian/
+# Seule la feuille de couleurs de l'équipe est commune.
+.obsidian/*
+!.obsidian/snippets/
 .trash/
+
+# Refaite par SYNC.bat chez chacun : l'envoyer créerait des conflits à chaque synchro
+Équipe/Activité.md
 
 # Fichiers temporaires de Google Drive : ils changent en permanence pendant
 # ses envois et n'ont rien à faire dans l'historique du projet

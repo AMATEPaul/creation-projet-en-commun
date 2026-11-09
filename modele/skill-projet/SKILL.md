@@ -23,7 +23,13 @@ Fonde chaque réponse sur les documents de `Documents/` : {{DOCUMENTS_LISTE}}.{{
 
 ## Où écrire
 
-La table « Pour ne pas se marcher dessus » de `Équipe/Répartition.md` fait foi. Écris dans l'espace de la personne en face de toi. Pour modifier un fichier que cette table réserve à l'autre, ou le `Guide`, obtiens d'abord son accord explicite et rappelle-lui de prévenir son binôme.
+La section « Qui écrit où » de `Équipe/Répartition.md` fait foi. Écris dans l'espace de la personne en face de toi. Pour modifier un fichier que cette section réserve à l'autre, ou le `Guide`, obtiens d'abord son accord explicite et rappelle-lui de prévenir son binôme.
+
+Signe ce qui est fait avec l'étiquette de la personne ({{ETIQUETTES_CODE}}, voir `equipe.json`), et l'état avec `#a-faire`, `#en-cours`, `#a-relire` ou `#valide`. Une tâche cochée dans `Équipe/02` porte l'étiquette de celui qui l'a validée au bout de la ligne. `Équipe/Activité.md` est refaite par la synchro : lis-la pour voir qui a modifié quoi, sans y écrire.
+
+Les réponses vont dans `Espaces/<personne>/Réponses <personne>.md`, sous la question concernée. `Équipe/Réponses.md` les réunit toutes seules : n'y écris rien.
+
+`Espaces/<personne>/Tableur <personne> - aperçu.md` est refait par la synchro à partir du `.xlsx` : lis-le pour voir ses valeurs, et fais écrire dans le `.xlsx`.
 
 Une hypothèse qui concerne les deux va dans `Équipe/Décisions communes.md`. Une question pour le prof va dans `Équipe/07 - Pièges et questions au prof.md`.
 

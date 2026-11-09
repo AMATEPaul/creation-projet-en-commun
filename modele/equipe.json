@@ -1,0 +1,7 @@
+{
+  "tableurOrigine": "Documents/{{NOM_TABLEUR_ORIGINE}}.xlsx",
+  "membres": [
+    { "espace": "{{PSEUDO1}}", "etiquette": "{{ETIQ1}}", "couleur": "bleu", "hex": "#4a9eff", "console": "Cyan" },
+    { "espace": "{{PSEUDO2}}", "etiquette": "{{ETIQ2}}", "couleur": "orange", "hex": "#ff9340", "console": "DarkYellow" }
+  ]
+}

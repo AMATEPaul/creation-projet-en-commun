@@ -1,4 +1,9 @@
-### Journal de {{PSEUDO}}
+---
+cssclasses:
+  - espace-{{ETIQ}}
+---
+
+### Journal de {{PSEUDO}} #{{ETIQ}}
 
 Entrée la plus récente en haut. Copie ce modèle à chaque séance.
 

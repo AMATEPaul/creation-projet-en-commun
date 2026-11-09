@@ -1,7 +1,8 @@
-﻿# Synchronise le coffre Obsidian avec GitHub, pour travailler à deux.
-# Ordre : 1) on enregistre ses modifs localement, 2) on récupère celles du
-# binôme, 3) on envoie le tout. Obsidian peut rester ouvert : il recharge
+﻿# Synchronise le coffre Obsidian avec GitHub, pour travailler à plusieurs.
+# Ordre : 1) on enregistre ses modifs localement, 2) on récupère celles des
+# autres, 3) on envoie le tout. Obsidian peut rester ouvert : il recharge
 # tout seul les fichiers que git vient de changer.
+# L'équipe (espaces, étiquettes, couleurs) est décrite dans equipe.json.
 param([switch]$NoPause)
 
 $ErrorActionPreference = 'Continue'
@@ -18,8 +19,99 @@ function Fin($code) {
     exit $code
 }
 function Ok($msg)     { Write-Host "  OK  $msg" -ForegroundColor Green }
-function Info($msg)   { Write-Host "  ..  $msg" -ForegroundColor Cyan }
+function Info($msg)   { Write-Host "  ..  $msg" -ForegroundColor Gray }
 function Erreur($msg) { Write-Host "  !!  $msg" -ForegroundColor Red }
+
+# --- L'équipe -------------------------------------------------------------------
+# equipe.json donne pour chaque membre : son espace (pseudo GitHub = dossier de
+# Espaces/), son étiquette Obsidian (#etiquette), sa couleur et sa couleur console.
+# Sans ce fichier, on prend les dossiers de Espaces/ avec des couleurs par défaut.
+$palette = @(
+    @{ couleur = 'bleu';   console = 'Cyan' },
+    @{ couleur = 'orange'; console = 'DarkYellow' },
+    @{ couleur = 'vert';   console = 'Green' },
+    @{ couleur = 'rose';   console = 'Magenta' }
+)
+$membres = @()
+$tableurOrigine = ''
+try {
+    if (Test-Path -LiteralPath 'equipe.json') {
+        $cfgEquipe = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'equipe.json')) | ConvertFrom-Json
+        $membres = @($cfgEquipe.membres)
+        $tableurOrigine = "$($cfgEquipe.tableurOrigine)"
+    }
+} catch { Info "equipe.json illisible : couleurs par défaut." }
+if ($membres.Count -eq 0) {
+    $i = 0
+    foreach ($d in @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'Espaces') -Directory -ErrorAction SilentlyContinue)) {
+        $p = $palette[$i % $palette.Count]; $i++
+        $membres += [pscustomobject]@{ espace = $d.Name; etiquette = $d.Name.ToLower(); couleur = $p.couleur; console = $p.console }
+    }
+}
+$espaces = @($membres | ForEach-Object { $_.espace })
+function Membre($esp) { $membres | Where-Object { $_.espace -eq $esp } | Select-Object -First 1 }
+function EtiquetteDe($esp) { $m = Membre $esp; if ($m) { return $m.etiquette } else { return $esp.ToLower() } }
+function CouleurDe($esp) { $m = Membre $esp; if ($m -and $m.console) { return $m.console } else { return 'White' } }
+$legende = (@($membres | ForEach-Object { "$($_.couleur) pour $($_.espace)" }) -join ', ')
+if ($legende) { $legende = $legende.Substring(0, 1).ToUpper() + $legende.Substring(1) + '.' }
+
+# Le nom de l'historique peut différer du pseudo : on le rattache à un espace.
+function EspaceDe($auteur) {
+    if ($auteur -in $espaces) { return $auteur }
+    if ($auteur -eq (git config user.name)) { return $espace }
+    if ($autres.Count -eq 1) { return $autres[0] }
+    return $auteur
+}
+
+# Active la feuille de couleurs partagée. Le réglage reste local : Obsidian le relit à son redémarrage.
+function ActiverCouleurs {
+    if (-not (Test-Path -LiteralPath '.obsidian/snippets/couleurs-equipe.css')) { return }
+    $p = '.obsidian/appearance.json'
+    try {
+        $cfg = if (Test-Path -LiteralPath $p) { [IO.File]::ReadAllText((Resolve-Path -LiteralPath $p).Path) | ConvertFrom-Json } else { New-Object PSObject }
+        if ($null -eq $cfg) { $cfg = New-Object PSObject }
+        $liste = @($cfg.enabledCssSnippets | Where-Object { $_ })
+        if ($liste -contains 'couleurs-equipe') { return }
+        $cfg | Add-Member -NotePropertyName enabledCssSnippets -NotePropertyValue @($liste + 'couleurs-equipe') -Force
+        $complet = Join-Path (Get-Location).Path $p
+        [IO.File]::WriteAllText($complet, ($cfg | ConvertTo-Json -Depth 10), (New-Object System.Text.UTF8Encoding($false)))
+        Ok "Couleurs activées : ferme et rouvre Obsidian pour les voir."
+    } catch {
+        Info "Couleurs à activer à la main : Réglages, Apparence, Extraits CSS."
+    }
+}
+
+# Refait la page Activité d'après l'historique. Elle n'est pas envoyée : chacun a la sienne, sans conflit possible.
+function EcrireActivite {
+    $sortie = New-Object System.Collections.ArrayList
+    [void]$sortie.Add("# Activité`n`nRetour à [[00 - Accueil]] · [[Ce qu'on a fait]]`n`nCette page est refaite à chaque ``SYNC.bat`` : n'écris rien ici. $legende`n")
+    $fichiers = New-Object System.Collections.ArrayList
+    $entete = $null
+    $vider = {
+        if ($entete) {
+            [void]$sortie.Add($entete)
+            $fichiers | Select-Object -First 8 | ForEach-Object { [void]$sortie.Add("> - ``$_``") }
+            if ($fichiers.Count -gt 8) { [void]$sortie.Add("> - et $($fichiers.Count - 8) autre(s)") }
+            [void]$sortie.Add('')
+        }
+    }
+    foreach ($l in (git log -20 --no-merges --format="@@%an%x09%ad" --date=format:"%d/%m à %H:%M" --name-only)) {
+        if ($l -like '@@*') {
+            & $vider
+            $champs = $l.Substring(2) -split "`t"
+            $esp = EspaceDe $champs[0]
+            $entete = "> [!$(EtiquetteDe $esp)] $esp, le $($champs[1])"
+            $fichiers.Clear()
+        } elseif ($l) { [void]$fichiers.Add($l) }
+    }
+    & $vider
+    $dossier = Join-Path (Get-Location).Path 'Équipe'
+    # Cette page n'est qu'un confort : un problème ici ne doit jamais faire échouer la synchro.
+    try {
+        [void][IO.Directory]::CreateDirectory($dossier)
+        [IO.File]::WriteAllText((Join-Path $dossier 'Activité.md'), (($sortie -join "`n") + "`n"), (New-Object System.Text.UTF8Encoding($false)))
+    } catch { Info "Page Activité non mise à jour." }
+}
 
 Write-Host ""
 Write-Host "=== Synchronisation du coffre $(Split-Path -Leaf $PSScriptRoot) ===" -ForegroundColor White
@@ -49,8 +141,6 @@ if (-not $nom) {
 
 # Espace personnel : demandé une seule fois par poste, pour repérer les
 # modifications faites par erreur dans l'espace d'un autre membre.
-# Les espaces sont les sous-dossiers de Espaces/ (un par pseudo GitHub).
-$espaces = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'Espaces') -Directory -ErrorAction SilentlyContinue | ForEach-Object { $_.Name })
 $espace = git config coffre.espace
 if ($espaces.Count -gt 0 -and $espace -notin $espaces) {
     if ($nom -in $espaces) { $espace = $nom }
@@ -68,6 +158,14 @@ $autres = @($espaces | Where-Object { $_ -ne $espace })
 
 $branche = git symbolic-ref --short HEAD
 $date = Get-Date -Format 'yyyy-MM-dd HH:mm'
+
+# Aperçu du tableur dans Obsidian : seulement le sien, pour ne jamais écrire dans le fichier d'un autre.
+# Un confort : s'il échoue, la synchro continue.
+try {
+    if ($espace -and (Test-Path -LiteralPath 'tableur-vers-note.ps1')) {
+        & (Join-Path $PSScriptRoot 'tableur-vers-note.ps1') -Espace $espace -Etiquette (EtiquetteDe $espace) -Origine $tableurOrigine
+    }
+} catch { Info "Aperçu du tableur non mis à jour : ferme-le s'il est ouvert, puis relance." }
 
 # --- 1) Enregistrer ses propres modifs --------------------------------------
 git add -A 2> $null
@@ -108,8 +206,8 @@ if ($LASTEXITCODE -ne 0) {
     Info "Aucune modification de ton côté."
 }
 
-# --- 2) Récupérer celles du binôme, 3) envoyer -------------------------------
-# Deux essais : si le binôme envoie pile entre notre récupération et notre
+# --- 2) Récupérer celles des autres, 3) envoyer ------------------------------
+# Deux essais : si quelqu'un envoie pile entre notre récupération et notre
 # envoi, GitHub refuse et il suffit de recommencer.
 for ($essai = 1; $essai -le 2; $essai++) {
     Info "Récupération de la dernière version sur GitHub..."
@@ -121,12 +219,12 @@ for ($essai = 1; $essai -le 2; $essai++) {
 
     git rev-parse --verify -q "origin/$branche" *> $null
     if ($LASTEXITCODE -eq 0) {
-        $avant = git rev-parse HEAD
+        $base = git merge-base HEAD "origin/$branche"
         git rebase -q "origin/$branche" *> $null
         if ($LASTEXITCODE -ne 0) {
             # Les notes se fusionnent seules (voir .gitattributes). On n'arrive donc
-            # ici que pour un fichier binaire modifié des deux côtés, comme le tableur.
-            # On met ta version de côté sur GitHub et on prend celle du binôme.
+            # ici que pour un fichier binaire modifié des deux côtés, comme un tableur.
+            # On met ta version de côté sur GitHub et on prend celle des autres.
             git rebase --abort *> $null
             $secours = "sauvegarde-$($nom -replace '[^A-Za-z0-9]', '')-$(Get-Date -Format 'yyyyMMdd-HHmm')"
             git branch $secours
@@ -139,24 +237,33 @@ for ($essai = 1; $essai -le 2; $essai++) {
             }
             git reset -q --hard "origin/$branche"
             Erreur "CONFLIT : vous avez modifié le même fichier non fusionnable."
-            Erreur "Ton dossier contient maintenant SA version."
+            Erreur "Ton dossier contient maintenant la version de GitHub."
             Erreur "La tienne est sauvegardée sur GitHub dans la branche '$secours'."
             Erreur "Mettez-vous d'accord sur quoi garder avant de continuer."
             Fin 2
         }
-        if ($avant -ne (git rev-parse HEAD)) { Ok "Modifications du binôme récupérées." }
-        else { Info "Rien de nouveau côté binôme." }
+        $nouveautes = @(git log --no-merges --format="%an%x09%ad%x09%s" --date=format:"%d/%m %H:%M" "$base..origin/$branche")
+        if ($nouveautes.Count -gt 0) {
+            Ok "Modifications des autres récupérées :"
+            foreach ($n in $nouveautes) {
+                $c = $n -split "`t"
+                $esp = EspaceDe $c[0]
+                Write-Host "      $esp, $($c[1]) : $($c[2])" -ForegroundColor (CouleurDe $esp)
+            }
+        } else { Info "Rien de nouveau côté binôme." }
     }
 
     git push -q -u origin $branche *> $null
     if ($LASTEXITCODE -eq 0) {
         Ok "Tout est à jour sur GitHub."
+        EcrireActivite
+        ActiverCouleurs
         Write-Host ""
         Write-Host "Derniers changements :" -ForegroundColor White
         git --no-pager log -5 --format="  %ad  %s" --date=format:"%d/%m %H:%M"
         Fin 0
     }
-    Info "GitHub a refusé l'envoi (le binôme vient d'envoyer ?), nouvel essai..."
+    Info "GitHub a refusé l'envoi (quelqu'un vient d'envoyer ?), nouvel essai..."
 }
 Erreur "Envoi impossible. Vérifie que tu as accepté l'invitation GitHub au dépôt"
 Erreur "(dans tes emails), puis relance SYNC.bat."

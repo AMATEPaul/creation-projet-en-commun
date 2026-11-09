@@ -8,19 +8,23 @@ L'idée, le rangement et le script de synchro viennent de **Raphaël** ([@glm02]
 
 ```text
 <Projet>/
-├── 00 - Accueil.md            chaque séance, l'équipe, les espaces, le guide, les documents
+├── 00 - Accueil.md            courte : chaque séance, l'équipe, l'aide
 ├── CLAUDE.md + .claude/skills/<projet>/   le skill de séance du projet
+├── equipe.json                membres, étiquettes, couleurs
+├── .obsidian/snippets/couleurs-equipe.css
 ├── Guide/                     la méthode : projet en clair, données, premiers pas,
 │                              formulaire, repères dans le poly, travailler à deux,
 │                              aide aux calculs par paliers
 ├── Équipe/                    le commun : questions à cocher, pièges et questions au prof,
-│                              répartition, décisions communes, résultats validés,
-│                              « ce qu'on a fait » (qui rassemble les journaux)
-├── Espaces/<pseudo>/          à chacun : brouillon, journal, tableur
+│                              répartition, décisions communes, et des pages qui se
+│                              remplissent seules : Réponses, Tableurs, Ce qu'on a fait, Activité
+├── Espaces/<pseudo>/          à chacun : réponses, brouillon, journal, tableur (+ son aperçu)
 ├── Documents/                 les sources (sujet, poly, tableur d'origine)
 ├── Animation/                 facultatif
-└── SYNC.bat + sync-obsidian.ps1
+└── SYNC.bat + sync-obsidian.ps1 + tableur-vers-note.ps1
 ```
+
+**Une couleur et une étiquette par personne** (bleu, orange, vert, rose) : dans la liste des fichiers, les réponses, les journaux, la page Activité et la console de `SYNC.bat`. Quand on valide une tâche, on la coche et on ajoute son étiquette au bout de la ligne (`- [x] **Q2** … #paul`), ce qui montre qui l'a validée. Les états `#a-faire`, `#en-cours`, `#a-relire` et `#valide` ont aussi leur couleur.
 
 | Zone | Qui écrit |
 |---|---|
@@ -33,7 +37,8 @@ L'idée, le rangement et le script de synchro viennent de **Raphaël** ([@glm02]
 **Créer un coffre** (`/creation-projet-en-commun`) :
 - lit les documents du projet (sujet, poly, tableur…) ;
 - écrit toutes les notes avec le vrai contenu du projet ;
-- crée un espace par membre, avec sa copie du tableur ;
+- crée un espace par membre, avec son fichier de réponses (une section par question) et sa copie du tableur ;
+- monte les pages communes qui se remplissent seules : toutes les réponses question par question, les tableurs, les journaux ;
 - ajoute un **skill de séance** propre au projet. Il fait le point en début de séance, écrit seulement dans l'espace de la personne, tient son journal et synchronise en fin de séance ;
 - crée le dépôt GitHub **privé**, invite les membres et vérifie la première synchro.
 
@@ -46,10 +51,11 @@ Il y a deux modes :
 ## Le script de synchro
 
 `SYNC.bat` lance `sync-obsidian.ps1`, qui :
-1. demande une seule fois le prénom et l'espace du poste (les espaces sont les dossiers de `Espaces/`) ;
+1. demande une seule fois le prénom et l'espace du poste (l'équipe est décrite dans `equipe.json`), puis refait l'aperçu de **son** tableur dans une note Obsidian (il lit le `.xlsx` sans avoir besoin d'Excel) ;
 2. enregistre tes modifs (commit). Il s'arrête si tu as modifié l'espace d'un autre, ou si plus de 5 fichiers ont disparu d'un coup ;
 3. récupère celles des autres (fetch + rebase). Les notes `.md` se fusionnent seules (`merge=union`). Pour un fichier binaire modifié des deux côtés, ta version est sauvegardée sur une branche GitHub et tu reçois celle de l'autre ;
-4. envoie le tout (push), avec un 2e essai si quelqu'un vient d'envoyer.
+4. envoie le tout (push), avec un 2e essai si quelqu'un vient d'envoyer ;
+5. affiche les envois des autres dans leur couleur, refait la page `Activité` (locale, jamais envoyée) et active les couleurs dans Obsidian.
 
 ## Installation
 
@@ -72,6 +78,8 @@ Puis, dans Claude Code, `/reload-skills` (ou redémarrer la session) et lancer `
 | `SKILL.md` | La méthode que suit Claude (créer ou rejoindre) |
 | `references/organisation.md` | Le rangement du coffre, zone par zone et note par note |
 | `modele/SYNC.bat`, `modele/sync-obsidian.ps1` | Le script de synchro |
+| `modele/tableur-vers-note.ps1` | L'aperçu du tableur dans Obsidian |
+| `modele/equipe.json`, `modele/couleurs-equipe.css` | L'équipe, ses étiquettes et ses couleurs |
 | `modele/gitignore.txt`, `modele/gitattributes.txt` | Copiés en `.gitignore` et `.gitattributes` dans le coffre |
 | `modele/CLAUDE.md`, `modele/skill-projet/SKILL.md` | Le skill de séance du projet |
 | `modele/Guide/`, `modele/Équipe/`, `modele/Espaces/` | Les notes génériques à compléter |

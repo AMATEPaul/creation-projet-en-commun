@@ -6,7 +6,7 @@ Le coffre est stocké sur GitHub. Quand l'un de vous double-clique sur `SYNC.bat
 
 ## La routine
 
-La routine et les droits d'écriture sont dans [[Répartition]]. Obsidian peut rester ouvert pendant la synchronisation. Par contre, **ferme Excel** (ou Word) si tu as ouvert un fichier du coffre.
+La routine est dans [[00 - Accueil]], et les droits d'écriture dans [[Répartition]]. Obsidian peut rester ouvert pendant la synchronisation. Par contre, **ferme Excel** (ou Word) si tu as ouvert un fichier du coffre.
 
 > [!warning] Ce n'est pas instantané
 > Les modifications n'arrivent chez l'autre que lorsqu'il lance `SYNC.bat` à son tour. Ce n'est pas comme un Google Docs.
@@ -50,6 +50,16 @@ Astuce : clic droit sur `SYNC.bat`, *Envoyer vers*, *Bureau (créer un raccourci
 - **Dépôt privé.** Les documents des profs (sujet, poly) ne doivent pas devenir publics.
 - **Pas de données personnelles ni de mots de passe** dans les notes.
 - **Pas de Google Drive ni de OneDrive sur ce dossier** : leur synchronisation peut abîmer le dépôt.
+
+## Les couleurs
+
+- **{{LEGENDE}}** Elles apparaissent dans la liste des fichiers, les journaux, les réponses et la page [[Activité]].
+- **Pour les activer :** lance `SYNC.bat`, ferme Obsidian puis rouvre-le. Si elles n'apparaissent pas, relance `SYNC.bat` et recommence, ou active-les dans *Réglages*, *Apparence*, *Extraits CSS*, `couleurs-equipe`.
+- **Étiquettes :** écris {{ETIQUETTES_CODE}}, `#a-faire`, `#en-cours`, `#a-relire` ou `#valide`. Quand tu coches une tâche, ajoute ton étiquette au bout de la ligne : on voit qui l'a validée.
+
+## Le tableur dans Obsidian
+
+À chaque `SYNC.bat`, ton tableur enregistré est recopié dans la note [[Tableurs]], avec seulement les feuilles que tu as modifiées. Le sens est unique : tu écris dans le tableur, jamais dans la note.
 
 ## Avec Claude Code
 

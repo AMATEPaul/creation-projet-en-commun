@@ -1,6 +1,6 @@
 ---
 name: creation-projet-en-commun
-description: Créer, ou rejoindre, un projet en commun à deux (ou plus) sous forme de coffre Obsidian synchronisé par GitHub. Le dépôt est privé, et un SYNC.bat en double-clic enregistre, récupère et envoie les modifs, avec des garde-fous contre les conflits et contre les modifs dans l'espace d'un autre. Le coffre a trois zones : Guide/ pour la méthode, Équipe/ pour la répartition, les décisions, les résultats validés et l'avancement, Espaces/<pseudo>/ pour le brouillon, le journal et le tableur de chacun. Il a aussi un skill de séance propre au projet, en mode prof ou en mode normal. À utiliser quand l'utilisateur veut monter un projet partagé avec un binôme (SAE, TP, projet de groupe), créer un coffre Obsidian commun, travailler à deux sur Obsidian, ou rejoindre et installer le coffre qu'un binôme a créé.
+description: Créer, ou rejoindre, un projet en commun à deux (ou plus) sous forme de coffre Obsidian synchronisé par GitHub. Le dépôt est privé, et un SYNC.bat en double-clic enregistre, récupère et envoie les modifs, avec des garde-fous contre les conflits et contre les modifs dans l'espace d'un autre. Le coffre a trois zones : Guide/ pour la méthode, Équipe/ pour la répartition, les décisions, l'avancement et des pages qui se remplissent seules (réponses, tableurs, journaux, activité), Espaces/<pseudo>/ pour les réponses, le brouillon, le journal et le tableur de chacun. Chaque personne a sa couleur et son étiquette, ce qui montre qui a écrit ou validé quoi. Il a aussi un skill de séance propre au projet, en mode prof ou en mode normal. À utiliser quand l'utilisateur veut monter un projet partagé avec un binôme (SAE, TP, projet de groupe), créer un coffre Obsidian commun, travailler à deux sur Obsidian, ou rejoindre et installer le coffre qu'un binôme a créé.
 metadata:
   categorie: iut/projet
   resume: Créer ou rejoindre un coffre Obsidian partagé à deux via GitHub (SYNC.bat, Guide / Équipe / Espaces).
@@ -19,12 +19,15 @@ Si ce n'est pas clair, demande lequel des deux avant de commencer.
 ## Les fichiers du skill
 
 - **`references/organisation.md` : le rangement complet (zones, notes, conventions). Lis-le avant d'écrire la moindre note.**
-- `modele/SYNC.bat` et `modele/sync-obsidian.ps1` : le script de synchro.
-  - **Copie-les tels quels** avec `cp` : le `.ps1` doit garder son BOM UTF-8 et ses fins de ligne CRLF, sinon les accents s'affichent mal sous PowerShell 5.1. Ne les réécris jamais avec l'outil Write.
-  - Le script lit les espaces dans les sous-dossiers de `Espaces/`, retient celui du poste dans `git config coffre.espace`, et bloque l'envoi d'une modif faite dans l'espace d'un autre.
-- `modele/gitignore.txt` devient `.gitignore`, et `modele/gitattributes.txt` devient `.gitattributes`.
-- `modele/CLAUDE.md` et `modele/skill-projet/SKILL.md` : le skill de séance du projet, avec des `{{…}}` à remplacer.
-- `modele/Guide/09 - Travailler à deux.md`, `modele/Équipe/*.md` et `modele/Espaces/Journal.md` : les notes génériques, avec des `{{…}}` à remplacer.
+- `modele/SYNC.bat`, `modele/sync-obsidian.ps1` et `modele/tableur-vers-note.ps1` : la synchro.
+  - **Copie-les tels quels** avec `cp` : les `.ps1` doivent garder leur BOM UTF-8 et leurs fins de ligne CRLF, sinon les accents s'affichent mal sous PowerShell 5.1. Ne les réécris jamais avec l'outil Write.
+  - Le script lit l'équipe dans `equipe.json`, ou à défaut dans les dossiers de `Espaces/`. Il retient l'espace du poste dans `git config coffre.espace` et bloque l'envoi d'une modif faite dans l'espace d'un autre.
+  - Il refait aussi, chez chacun, l'aperçu de son tableur et la page `Équipe/Activité.md`, active les couleurs et affiche les envois des autres dans leur couleur.
+- `modele/equipe.json` et `modele/couleurs-equipe.css` : les membres, leurs étiquettes et leurs couleurs. Le CSS va dans `.obsidian/snippets/`.
+- `modele/gitignore.txt` devient `.gitignore` : `.obsidian/*` sauf `snippets/`, et `Équipe/Activité.md`. `modele/gitattributes.txt` devient `.gitattributes`.
+- `modele/CLAUDE.md` et `modele/skill-projet/SKILL.md` : le skill de séance du projet.
+- `modele/Guide/`, `modele/Équipe/` et `modele/Espaces/` (Réponses, Brouillon, Journal) : les notes génériques.
+- Tous ces modèles contiennent des `{{…}}` à remplacer, sauf les scripts.
 
 ## Règles
 
@@ -42,7 +45,7 @@ Si ce n'est pas clair, demande lequel des deux avant de commencer.
 ### 1. Cadrer (une seule question groupée)
 Demande avec AskUserQuestion, en ne posant que ce que tu ne sais pas déjà :
 - le **nom du projet**, qui sera le nom du dossier (par exemple `SAE VV3`) ;
-- les **pseudos GitHub de tous les membres**, utilisateur compris. Ils serviront de noms d'espaces ;
+- les **pseudos GitHub de tous les membres**, utilisateur compris. Ils serviront de noms d'espaces. Demande aussi une **étiquette courte** pour chacun (par défaut le pseudo en minuscules, un prénom passe très bien : `#paul`). Les couleurs suivent l'ordre bleu, orange, vert, rose ;
 - le **dossier des documents sources** (sujet, poly, tableur…) ;
 - le **mode** :
   - **guidé, ou mode prof (recommandé pour un projet noté)** : aucune réponse dans le coffre, des aides par paliers sur des cas inventés ;
@@ -74,16 +77,18 @@ Pour les PDF, le texte seul perd les figures et les formules : affiche les pages
 ### 4. Construire le coffre
 ```bash
 M=~/.claude/skills/creation-projet-en-commun/modele; C="$USERPROFILE/Documents/<Nom>"
-mkdir -p "$C/Guide" "$C/Équipe" "$C/Documents" "$C/.claude/skills/<slug>"
-cp "$M/SYNC.bat" "$M/sync-obsidian.ps1" "$C/"
+mkdir -p "$C/Guide" "$C/Équipe" "$C/Documents" "$C/.claude/skills/<slug>" "$C/.obsidian/snippets"
+cp "$M/SYNC.bat" "$M/sync-obsidian.ps1" "$M/tableur-vers-note.ps1" "$M/equipe.json" "$C/"
+cp "$M/couleurs-equipe.css" "$C/.obsidian/snippets/"
 cp "$M/gitignore.txt" "$C/.gitignore"; cp "$M/gitattributes.txt" "$C/.gitattributes"
 cp "$M/Équipe/"*.md "$C/Équipe/"; cp "$M/Guide/09 - Travailler à deux.md" "$C/Guide/"
 cp "$M/CLAUDE.md" "$C/"; cp "$M/skill-projet/SKILL.md" "$C/.claude/skills/<slug>/"
 # pour chaque membre :
-mkdir -p "$C/Espaces/<pseudo>"; cp "$M/Espaces/Journal.md" "$C/Espaces/<pseudo>/Journal <pseudo>.md"
+mkdir -p "$C/Espaces/<pseudo>"
+for f in Réponses Brouillon Journal; do cp "$M/Espaces/$f.md" "$C/Espaces/<pseudo>/$f <pseudo>.md"; done
 ```
-1. Copie les sources dans `Documents/` sous des noms courts et lisibles. Copie le tableur dans chaque espace sous le nom `Tableur <pseudo>.xlsx`.
-2. Remplace tous les `{{…}}` des fichiers copiés. Le détail de chaque bloc est dans `references/organisation.md`. Pour le skill de projet :
+1. Copie les sources dans `Documents/` sous des noms courts et lisibles. Copie le tableur dans chaque espace sous le nom `Tableur <pseudo>.xlsx`. Ne crée pas les aperçus ni `Activité.md` : la synchro s'en charge.
+2. Remplace tous les `{{…}}` des fichiers copiés. Le détail de chaque bloc est dans `references/organisation.md`. `equipe.json` est la référence pour les pseudos, les étiquettes et les couleurs. Le CSS, la légende et les étiquettes des notes doivent lui correspondre exactement. Pour le skill de projet :
    - `{{MEMBRES_PHRASE}}` : « Deux étudiants, `a` et `b`, » ;
    - `{{SUJET_COURT}}` : quelques mots-clés du sujet ;
    - `{{DOCUMENTS_LISTE}}` : les chemins des PDF de `Documents/` ;
@@ -103,10 +108,10 @@ mkdir -p "$C/Espaces/<pseudo>"; cp "$M/Espaces/Journal.md" "$C/Espaces/<pseudo>/
      - `{{ROLE_CLAUDE}}` = « Tu es leur coéquipier : tu peux calculer et proposer, en expliquant chaque étape pour qu'ils puissent la refaire. » ;
      - `{{REGLES_MODE}}` = des puces qui disent de montrer la démarche, de signaler les hypothèses et de faire valider chaque résultat par le relecteur du bloc.
 3. Écris les notes propres au projet en suivant **exactement** `references/organisation.md`, avec le vrai contenu : vraies questions, vraies données, vrais numéros de page.
-   - `00 - Accueil` ;
+   - `00 - Accueil`, courte ;
    - `Guide/` 01, 03, 04, 06, 08, 10 ;
    - `Équipe/` 02 et 07 ;
-   - un `Brouillon <pseudo>.md` par membre.
+   - les `{{QUESTIONS}}` des `Réponses <pseudo>.md` et les `{{QUESTIONS_INTEGREES}}` de `Équipe/Réponses.md`, avec les mêmes intitulés que dans 02.
    En mode guidé, aucun résultat chiffré, et les exemples de la note 10 portent sur un cas inventé.
 4. `Animation/` est facultatif : propose-la seulement si une explication visuelle aide vraiment.
 5. Contrôle :
@@ -130,7 +135,7 @@ Vérifie ensuite que le dépôt est bien privé : `gh repo view --json visibilit
 ### 6. Ouvrir dans Obsidian et faire la 1re synchro
 - L'utilisateur ouvre le coffre lui-même : *Gérer les coffres* → *Ouvrir un dossier en tant que coffre* → `Documents\<Nom>`, sélectionné **sans entrer dedans**.
 - **Vérifie** dans `%APPDATA%\obsidian\obsidian.json` que le coffre marqué `"open": true` pointe bien vers ce dossier. Une erreur fréquente : Obsidian a ouvert un autre dossier, ou le sous-dossier `.obsidian`.
-- Lance une synchro (`-NoPause`) : elle doit afficher `Tout est à jour sur GitHub`.
+- Lance une synchro (`-NoPause`) : elle doit afficher `Tout est à jour sur GitHub`. Elle crée l'aperçu du tableur et `Équipe/Activité.md`, puis active les couleurs. Demande ensuite à l'utilisateur de **fermer et rouvrir Obsidian** pour les voir.
 
 ### 7. Donner le message pour le binôme
 Termine avec un bloc à copier-coller pour le binôme : accepter l'invitation (`https://github.com/<proprio>/<slug>/invitations`), installer Git et Obsidian, la ligne `git clone`, l'ouverture du coffre, le premier `SYNC.bat` (qui lui demande son espace) et `/<slug>` dans Claude Code. Ce sont les étapes de `Guide/09`.
@@ -143,7 +148,7 @@ Termine avec un bloc à copier-coller pour le binôme : accepter l'invitation (`
    ```bash
    git clone https://github.com/<proprio>/<depot>.git "$USERPROFILE/Documents/<Nom>"
    ```
-4. **Lire `sync-obsidian.ps1` avant de le lancer** : il vient de quelqu'un d'autre. Vérifie qu'il ne fait que des commandes git dans son propre dossier. Repère aussi **la clé de config de l'espace** : `coffre.espace` pour un coffre créé par ce skill, mais un coffre plus ancien peut utiliser une autre clé, comme `saevv3.espace`.
+4. **Lire les `.ps1` avant de les lancer** : ils viennent de quelqu'un d'autre. Vérifie qu'ils ne font que des commandes git, et des écritures dans le coffre et dans son `.obsidian`. Repère aussi **la clé de config de l'espace** : `coffre.espace` pour un coffre créé par ce skill, mais un coffre plus ancien peut utiliser une autre clé, comme `saevv3.espace`.
 5. **Identité et espace** : vérifie `git config user.name`, puis la clé d'espace. Comme `-NoPause` ne pose aucune question :
    - si le nom est vide, demande le prénom ou le pseudo et fais `git config user.name "<…>"` ;
    - si l'espace n'est pas réglé et que `user.name` ne correspond pas exactement à un dossier de `Espaces/`, fais `git config <clé> <pseudo>`.
