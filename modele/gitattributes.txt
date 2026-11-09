@@ -1,0 +1,14 @@
+# Notes : si deux personnes modifient le même endroit, on garde les deux versions
+# à la suite, plutôt qu'un conflit bloquant. Rien n'est perdu, il reste à faire le tri.
+*.md text eol=lf merge=union
+
+# Scripts Windows : cmd.exe a besoin de fins de ligne CRLF
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Fichiers binaires : impossibles à fusionner, git doit les traiter d'un seul bloc
+*.pdf binary
+*.xlsx binary
+*.png binary
+*.jpg binary
+*.jpeg binary

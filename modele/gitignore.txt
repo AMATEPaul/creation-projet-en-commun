@@ -1,0 +1,25 @@
+# Réglages Obsidian : chacun garde les siens (thème, fenêtres ouvertes).
+# Les partager créerait des conflits à chaque ouverture, sans rien apporter.
+.obsidian/
+.trash/
+
+# Fichiers temporaires de Google Drive : ils changent en permanence pendant
+# ses envois et n'ont rien à faire dans l'historique du projet
+.tmp.driveupload/
+.tmp.drivedownload/
+
+# Secrets et données personnelles : ne doivent jamais arriver dans le dépôt
+.env
+.env.*
+*.pem
+*.key
+credentials*.json
+secrets*.json
+*.local.json
+
+# Fichiers temporaires d'Excel et de Windows
+~$*
+.~lock.*
+Thumbs.db
+desktop.ini
+.DS_Store
